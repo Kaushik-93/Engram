@@ -1,125 +1,229 @@
 "use client";
 
 import * as React from "react";
+import {
+    Search,
+    Plus,
+    BookOpen,
+    ChevronRight,
+    ArrowLeft,
+    Search as SearchIcon,
+    Copy,
+    Share2,
+    MoreHorizontal,
+    Highlighter,
+    FileText,
+    Calendar,
+    Sparkles
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ChevronDown, ChevronRight, AlertCircle, CheckCircle2, Search, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { bookStore, Book, highlightStore, Highlight } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-export default function NotesPage() {
-    return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-500">
+type ViewState = "dashboard" | "book-notes";
 
-            {/* Header & Filter */}
-            <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold">Your Engrams</h1>
-                    <p className="text-muted-foreground"> {86} concepts secured.</p>
+export default function NotesPage() {
+    const [view, setView] = React.useState<ViewState>("dashboard");
+    const [books, setBooks] = React.useState<Book[]>([]);
+    const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
+    const [highlights, setHighlights] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [searchQuery, setSearchQuery] = React.useState("");
+
+    React.useEffect(() => {
+        loadData();
+    }, []);
+
+    async function loadData() {
+        setIsLoading(true);
+        try {
+            const allBooks = await bookStore.getAll();
+            setBooks(allBooks);
+        } catch (err) {
+            console.error("Failed to load books:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function openBookNotes(book: Book) {
+        setIsLoading(true);
+        setSelectedBook(book);
+        try {
+            const h = await highlightStore.getByBook(book.id);
+            setHighlights(h);
+            setView("book-notes");
+        } catch (err) {
+            console.error("Failed to load highlights:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const filteredHighlights = highlights.filter(h =>
+        h.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // Dashboard View
+    if (view === "dashboard") {
+        return (
+            <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-700">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase text-[10px]">
+                            <Sparkles size={12} />
+                            Knowledge Base
+                        </div>
+                        <h1 className="text-4xl font-black tracking-tight">Your <span className="text-primary italic">Engrams</span></h1>
+                        <p className="text-muted-foreground font-medium">Browse insights categorized by source material.</p>
+                    </div>
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
-                        <Search className="absolute left-3 top-2.5 text-muted-foreground" size={16} />
+
+                {isLoading ? (
+                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-40 rounded-[32px] bg-muted animate-pulse border border-border/50" />
+                        ))}
+                    </div>
+                ) : books.length === 0 ? (
+                    <div className="text-center py-20 bg-muted/20 rounded-[32px] border-2 border-dashed border-border/50">
+                        <FileText className="mx-auto text-muted-foreground mb-4" size={40} />
+                        <p className="text-muted-foreground font-medium">No books in your library yet.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {books.map((book) => (
+                            <Card
+                                key={book.id}
+                                className="group relative h-full rounded-[32px] border border-border/60 bg-card/50 backdrop-blur-sm hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 transition-all duration-500 cursor-pointer overflow-hidden"
+                                onClick={() => openBookNotes(book)}
+                            >
+                                <CardContent className="p-8 flex flex-col gap-6">
+                                    <div className="space-y-2">
+                                        <h3 className="font-black text-xl leading-tight group-hover:text-primary transition-colors line-clamp-2">
+                                            {book.title}
+                                        </h3>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                            <Calendar size={12} />
+                                            {new Date(book.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto flex justify-between items-center">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full text-primary">
+                                            <Highlighter size={14} />
+                                            <span className="text-xs font-bold">Review Notes</span>
+                                        </div>
+                                        <Button size="icon" variant="ghost" className="rounded-full h-8 w-8 group-hover:translate-x-1 transition-transform">
+                                            <ChevronRight size={18} />
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Book specific notes view
+    return (
+        <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {/* Header / Nav */}
+            <div className="flex flex-col gap-6">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-fit rounded-full gap-2 text-muted-foreground hover:text-foreground -ml-2"
+                    onClick={() => setView("dashboard")}
+                >
+                    <ArrowLeft size={16} /> Dashboard
+                </Button>
+
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                    <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase text-[10px]">
+                            <FileText size={12} />
+                            Source Material
+                        </div>
+                        <h2 className="text-4xl font-black tracking-tight leading-tight">{selectedBook?.title}</h2>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground font-medium">
+                            <span className="flex items-center gap-1.5">
+                                <Highlighter size={14} className="text-primary" />
+                                {highlights.length} Highlights
+                            </span>
+                            <span className="w-1 h-1 rounded-full bg-border" />
+                            <span>v1.0</span>
+                        </div>
+                    </div>
+
+                    <div className="relative w-full md:w-72">
+                        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60" size={16} />
                         <input
                             type="text"
-                            placeholder="Search concepts..."
-                            className="w-full h-10 pl-9 pr-4 rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            placeholder="Filter insights..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-12 pl-11 pr-4 rounded-2xl border border-border bg-card/50 backdrop-blur-sm focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none text-sm font-medium"
                         />
                     </div>
-                    <Button className="gap-2">
-                        <Plus size={16} /> New Note
-                    </Button>
                 </div>
             </div>
 
-            <div className="space-y-4">
-                {/* Note Item 1 - Healthy */}
-                <NoteItem
-                    question="What is the difference between working memory and long-term memory?"
-                    answer="Working memory is temporary and limited in capacity (cognitive load), whereas long-term memory is theoretically unlimited and stores information permanently as schemas."
-                    source="Cognitive Load Theory, p.12"
-                    status="healthy"
-                />
+            {/* Notes List */}
+            <div className="space-y-6">
+                {isLoading ? (
+                    [1, 2, 3].map(i => (
+                        <div key={i} className="h-32 rounded-[32px] bg-muted animate-pulse" />
+                    ))
+                ) : filteredHighlights.length === 0 ? (
+                    <div className="text-center py-20 bg-muted/20 rounded-[40px] border-2 border-dashed border-border/50">
+                        <p className="text-muted-foreground font-medium">No insights match your filter.</p>
+                    </div>
+                ) : (
+                    filteredHighlights.map((highlight, index) => (
+                        <Card
+                            key={highlight.id}
+                            className="group rounded-[32px] border border-border/60 bg-card/50 backdrop-blur-sm hover:border-primary/20 hover:shadow-xl transition-all duration-500 overflow-hidden"
+                        >
+                            <CardContent className="p-8 space-y-6">
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                        <span className="text-[10px] font-black text-primary italic">#{index + 1}</span>
+                                    </div>
+                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg cursor-pointer">
+                                            <Copy size={14} />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg cursor-pointer">
+                                            <Share2 size={14} />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg cursor-pointer">
+                                            <MoreHorizontal size={14} />
+                                        </Button>
+                                    </div>
+                                </div>
 
-                {/* Note Item 2 - Too Long */}
-                <NoteItem
-                    question="Explain the process of synaptic transmission."
-                    answer="Synaptic transmission begins when an action potential reaches the axon terminal. This causes voltage-gated calcium channels to open, allowing calcium ions to enter. The influx of calcium causes synaptic vesicles to fuse with the presynaptic membrane, releasing neurotransmitters into the synaptic cleft. These neurotransmitters diffuse across the cleft and bind to specific receptors on the postsynaptic membrane. This binding causes ion channels to open or close, leading to a change in the membrane potential of the postsynaptic neuron. The neurotransmitters are then cleared from the cleft by reuptake or enzymatic degradation."
-                    source="Neuroscience 101"
-                    status="warning"
-                />
+                                <p className="text-lg md:text-xl font-medium leading-relaxed text-foreground/90 selection:bg-primary/20">
+                                    {highlight.text}
+                                </p>
 
-                {/* Note Item 3 */}
-                <NoteItem
-                    question="What is the spacing effect?"
-                    answer="The phenomenon where learning is greater when studying is spread out over time, as opposed to studying the same amount of content in a single session."
-                    source="Make It Stick"
-                    status="healthy"
-                />
-
-                {/* Note Item 4 */}
-                <NoteItem
-                    question="Define 'Chunking' in the context of learning."
-                    answer="Chunking is the process of binding individual pieces of information into a meaningful whole (a chunk). This bypasses the limits of working memory."
-                    source="Learning How to Learn"
-                    status="healthy"
-                />
+                                <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                                        <BookOpen size={12} className="text-primary" />
+                                        Page {highlight.pageNumber}
+                                    </div>
+                                    <div className="px-3 py-1 rounded-full bg-primary/5 text-[10px] font-black text-primary uppercase tracking-widest">
+                                        Insight
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                )}
             </div>
         </div>
     );
-}
-
-function NoteItem({ question, answer, source, status }: { question: string, answer: string, source: string, status: "healthy" | "warning" }) {
-    const [isOpen, setIsOpen] = React.useState(false);
-
-    return (
-        <Card className={cn(
-            "overflow-hidden transition-all duration-300 border hover:border-primary/30",
-            isOpen ? "bg-card shadow-md" : "bg-card/50 shadow-sm"
-        )}>
-            <div
-                className="p-4 flex items-start gap-4 cursor-pointer select-none"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <button className="mt-1 text-muted-foreground hover:text-foreground transition-colors">
-                    {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                </button>
-                <div className="flex-1 space-y-1">
-                    <h3 className="font-semibold text-lg leading-snug">{question}</h3>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{source}</span>
-                        {status === "warning" && isOpen && (
-                            <span className="flex items-center gap-1 text-orange-500 font-medium">
-                                <AlertCircle size={12} /> Consider simplifying
-                            </span>
-                        )}
-                        {status === "healthy" && isOpen && (
-                            <span className="flex items-center gap-1 text-green-600 font-medium">
-                                <CheckCircle2 size={12} /> Optimal length
-                            </span>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className={cn(
-                "grid transition-all duration-300 ease-in-out",
-                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-            )}>
-                <div className="overflow-hidden">
-                    <div className="p-4 pt-0 pl-12 pr-8 pb-6">
-                        <p className={cn(
-                            "leading-relaxed",
-                            status === "warning" ? "text-muted-foreground/90" : "text-foreground/90"
-                        )}>
-                            {answer}
-                        </p>
-                        <div className="mt-4 flex gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 text-xs">Edit</Button>
-                            <Button variant="ghost" size="sm" className="h-8 text-xs">Convert to Flashcard</Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </Card>
-    )
 }

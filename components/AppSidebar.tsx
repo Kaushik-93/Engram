@@ -63,14 +63,19 @@ export function AppSidebar() {
     const pathname = usePathname()
     return (
         <Sidebar variant="sidebar" collapsible="icon">
-            <SidebarHeader className="flex p-4">
-                <h2 className="text-2xl font-black tracking-tighter text-foreground leading-none">
-                    Engram<span className="text-primary tracking-normal">.</span>
-                </h2>
+            <SidebarHeader className="flex h-16 px-4">
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="py-1 group-data-[state=collapsed]:w-8">
+                        <Brain className="size-4 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-black tracking-tighter text-foreground group-data-[collapsible=icon]:hidden ">
+                        Engram<span className="text-primary tracking-normal">.</span>
+                    </h2>
+                </div>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupContent className="px-2">
+                    <SidebarGroupContent className="">
 
                         <SidebarMenu>
                             {data.navMain.map((item) => (

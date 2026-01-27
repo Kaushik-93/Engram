@@ -5,6 +5,7 @@ export interface Book {
     file_name: string;
     total_pages: number;
     last_read_page: number;
+    is_favorite: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -27,22 +28,26 @@ export function toFrontendHighlight(h: Highlight) {
     let text = h.text;
     let rects = undefined;
 
-    // Detect versioned percentage-based highlights (v:2)
-    if (text.includes("|||rects:")) {
+    // Detect versioned percentage-based highlights (v:2 or v:3)
+    if (text.includes("|||rects:") || text.includes("|||b64rects:")) {
         try {
+            const isVersion3 = text.includes("|v:3|||");
             const isVersion2 = text.includes("|v:2|||");
-            const rectsMatch = text.match(/\|\|\|rects:(\[.*?\])/);
 
-            if (rectsMatch && rectsMatch[1]) {
-                const parsed = JSON.parse(rectsMatch[1]);
-                // Only use rects if they are confirmed percentage-based (v:2)
-                // Legacy non-v2 rects are pixels and will be misplaced on zoom
-                if (isVersion2) {
-                    rects = parsed;
+            if (isVersion3) {
+                const parts = text.split("|||b64rects:");
+                if (parts[1]) {
+                    const encoded = parts[1].split("|v:3|||")[0];
+                    rects = JSON.parse(atob(encoded));
+                    text = parts[0];
+                }
+            } else if (isVersion2) {
+                const rectsMatch = text.match(/\|\|\|rects:(\[.*?\])/);
+                if (rectsMatch && rectsMatch[1]) {
+                    rects = JSON.parse(rectsMatch[1]);
+                    text = text.split("|||rects:")[0];
                 }
             }
-            // Clean up text for UI
-            text = text.split("|||rects:")[0];
         } catch (e) {
             console.error("Failed to parse rects from text", e);
         }
@@ -163,9 +168,9 @@ export const highlightStore = {
         color: string;
     }) => {
         // Encode rects into text field to bypass schema limitations
-        // v:2 indicator means percentages are used (scale-independent)
+        // v:3 indicator means Base64 encoded JSON
         const encodedText = highlight.rects
-            ? `${highlight.text}|||rects:${JSON.stringify(highlight.rects)}|v:2|||`
+            ? `${highlight.text}|||b64rects:${btoa(JSON.stringify(highlight.rects))}|v:3|||`
             : highlight.text;
 
         const response = await fetch("/api/highlights", {

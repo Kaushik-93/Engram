@@ -9,20 +9,27 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card"; // Added Card import
 import {
-    Upload,
     BookOpen,
     Loader2,
     Search,
-    Filter,
-    LayoutGrid,
-    ArrowUpDown,
     Plus,
     AlertCircle,
-    CheckCircle2,
-    Clock
+    Clock,
+    Heart,
+    RefreshCw, // Added RefreshCw
+    Activity, // Added Activity
+    Sparkles, // Added Sparkles
+    Calendar // Added Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Dynamic import to avoid SSR issues with react-pdf
 const PdfViewer = dynamic(
@@ -30,10 +37,15 @@ const PdfViewer = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+            <div className="fixed inset-0 z-50 bg-background flex items-center justify-center border-t border-border/40">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <div className="text-muted-foreground font-medium animate-pulse">Initializing Library...</div>
+                    <div className="relative">
+                        <Loader2 className="h-12 w-12 animate-spin text-primary/20" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                        </div>
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Initializing Workspace</div>
                 </div>
             </div>
         )
@@ -41,7 +53,8 @@ const PdfViewer = dynamic(
 );
 
 type SortOption = "recent" | "title" | "progress";
-type FilterStatus = "all" | "new" | "in-progress" | "completed";
+// Update FilterStatus type
+type FilterStatus = "all" | "favorites" | "new" | "in-progress" | "completed";
 
 export default function LibraryPage() {
     const [books, setBooks] = React.useState<Book[]>([]);
@@ -143,6 +156,21 @@ export default function LibraryPage() {
         }
     }
 
+    async function handleToggleFavorite(book: Book) {
+        // Optimistic update
+        const newStatus = !book.is_favorite;
+        setBooks(books.map(b => b.id === book.id ? { ...b, is_favorite: newStatus } : b));
+
+        try {
+            await bookStore.update(book.id, { is_favorite: newStatus });
+        } catch (err) {
+            console.error("Failed to update favorite status:", err);
+            // Revert on failure
+            setBooks(books.map(b => b.id === book.id ? { ...b, is_favorite: !newStatus } : b));
+            setError("Failed to update favorite status.");
+        }
+    }
+
     const filteredBooks = React.useMemo(() => {
         return books
             .filter((book) => {
@@ -150,6 +178,7 @@ export default function LibraryPage() {
 
                 const progress = book.total_pages > 0 ? (book.last_read_page / book.total_pages) * 100 : 0;
                 let matchesStatus = true;
+                if (filterStatus === "favorites") matchesStatus = book.is_favorite;
                 if (filterStatus === "new") matchesStatus = book.last_read_page === 0;
                 if (filterStatus === "in-progress") matchesStatus = book.last_read_page > 0 && progress < 100;
                 if (filterStatus === "completed") matchesStatus = progress === 100 && book.total_pages > 0;
@@ -177,91 +206,102 @@ export default function LibraryPage() {
     }
 
     return (
-        <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6 pb-20 animate-in fade-in duration-500">
-            {/* Controls Bar */}
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur-md py-4 border-b border-border/40 px-2 lg:px-0">
-                <div className="flex flex-wrap items-center gap-4 flex-1">
-                    <div className="relative group min-w-[240px] flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4 group-focus-within:text-primary transition-colors" />
-                        <Input
+        <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase text-[10px]">
+                        <BookOpen size={12} />
+                        Library Management
+                    </div>
+                    <h1 className="text-4xl font-black tracking-tight">Your <span className="text-primary italic">Collection</span></h1>
+                    <p className="text-muted-foreground font-medium">Manage your digital engrams and search across your knowledge base.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative w-full md:w-80 group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 transition-colors group-focus-within:text-primary" size={18} />
+                        <input
+                            type="text"
                             placeholder="Search your library..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 h-10 bg-card border-border/60 rounded-xl focus-visible:ring-primary/20 text-sm"
+                            className="w-full h-12 pl-12 pr-4 rounded-2xl border border-border bg-card/50 backdrop-blur-sm focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all outline-none text-sm font-medium"
                         />
                     </div>
-
-                    <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50 h-10">
-                        {[
-                            { id: 'all', icon: LayoutGrid },
-                            { id: 'new', icon: Plus },
-                            { id: 'in-progress', icon: Clock },
-                            { id: 'completed', icon: CheckCircle2 },
-                        ].map((s) => (
-                            <Button
-                                key={s.id}
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => setFilterStatus(s.id as FilterStatus)}
-                                className={cn(
-                                    "h-8 w-8 transition-all",
-                                    filterStatus === s.id
-                                        ? "bg-background text-primary shadow-xs"
-                                        : "text-muted-foreground hover:bg-background/50"
-                                )}
-                                title={`Filter: ${s.id}`}
-                            >
-                                <s.icon size={15} />
-                            </Button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50 h-10">
-                        {[
-                            { id: 'recent', label: 'Recent', icon: ArrowUpDown },
-                            { id: 'title', label: 'A-Z', icon: Filter },
-                            { id: 'progress', label: 'Progress', icon: LayoutGrid },
-                        ].map((option) => (
-                            <button
-                                key={option.id}
-                                onClick={() => setSortBy(option.id as SortOption)}
-                                className={cn(
-                                    "flex items-center gap-2 px-3 h-8 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap",
-                                    sortBy === option.id
-                                        ? "bg-background text-primary shadow-xs"
-                                        : "text-muted-foreground hover:bg-background/50"
-                                )}
-                            >
-                                <option.icon size={11} />
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <Separator orientation="vertical" className="h-5 mx-1 hidden sm:block" />
-
                     <input
-                        ref={fileInputRef}
                         type="file"
                         accept="application/pdf"
                         onChange={handleFileUpload}
                         className="hidden"
+                        ref={fileInputRef}
                     />
                     <Button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        size="sm"
-                        className="h-10 px-4 bg-primary text-primary-foreground font-bold shadow-sm"
+                        className="h-12 px-6 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all gap-2"
                     >
-                        {isUploading ? (
-                            <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                            <Plus size={14} strokeWidth={3} />
-                        )}
-                        <span className="hidden sm:inline text-xs">Add PDF</span>
+                        {isUploading ? <RefreshCw className="animate-spin" size={16} /> : <Plus size={18} />}
+                        Import PDF
                     </Button>
+                </div>
+            </div>
+
+            {/* Filtering & Sorting Bar */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center p-2 rounded-[24px] bg-muted/30 border border-border/40">
+                <div className="flex p-1 bg-background/50 rounded-2xl border border-border/40 gap-1 overflow-x-auto no-scrollbar">
+                    {(["all", "favorites", "new", "in-progress", "completed"] as FilterStatus[]).map((status) => (
+                        <TooltipProvider key={status}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant={filterStatus === status ? "secondary" : "ghost"}
+                                        size="sm"
+                                        onClick={() => setFilterStatus(status)}
+                                        className={cn(
+                                            "rounded-xl px-4 py-1.5 h-9 text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+                                            filterStatus === status ? "bg-card shadow-sm text-primary" : "text-muted-foreground"
+                                        )}
+                                    >
+                                        {status === "favorites" ? <Heart size={14} className={cn(filterStatus === status && "fill-primary")} /> : status.replace("-", " ")}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="font-bold uppercase text-[10px] tracking-widest">Filter: {status}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-2 pr-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2 shrink-0">Sort by</span>
+                    <div className="flex p-1 bg-background/50 rounded-2xl border border-border/40 gap-1">
+                        {(["recent", "title", "progress"] as SortOption[]).map((option) => (
+                            <TooltipProvider key={option}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={sortBy === option ? "secondary" : "ghost"}
+                                            size="sm"
+                                            onClick={() => setSortBy(option)}
+                                            className={cn(
+                                                "rounded-xl p-1 h-9 w-9 transition-all",
+                                                sortBy === option ? "bg-card shadow-sm text-primary" : "text-muted-foreground"
+                                            )}
+                                        >
+                                            {option === "recent" && <Clock size={16} />}
+                                            {option === "title" && <span className="font-black text-[10px] uppercase">Az</span>}
+                                            {option === "progress" && <Activity size={16} />}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="font-bold uppercase text-[10px] tracking-widest">Sort: {option}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -281,47 +321,48 @@ export default function LibraryPage() {
                 </div>
             )}
 
-            {/* Library Grid */}
+            {/* Content Area */}
             {isLoading ? (
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 auto-rows-fr">
-                    {[...Array(12)].map((_, i) => (
-                        <div key={i} className="flex flex-col h-full space-y-3 bg-card p-0 rounded-xl border border-border overflow-hidden">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <Card key={i} className="rounded-[30px] border border-border/60 overflow-hidden h-48 bg-card/50">
                             <Skeleton className="h-20 w-full" />
-                            <div className="px-3.5 py-1.5 space-y-2">
-                                <Skeleton className="h-3 w-3/4" />
+                            <div className="p-4 space-y-2">
+                                <Skeleton className="h-4 w-3/4" />
                                 <Skeleton className="h-2 w-1/2" />
                             </div>
-                            <div className="mt-auto p-3 border-t border-border/50">
-                                <Skeleton className="h-1.5 w-full" />
-                            </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
             ) : filteredBooks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 space-y-6 bg-muted/10 rounded-3xl border-2 border-dashed border-border/40">
+                <div className="flex flex-col items-center justify-center py-24 space-y-6 bg-muted/10 rounded-[40px] border-2 border-dashed border-border/40">
                     <div className="h-16 w-16 rounded-2xl bg-background flex items-center justify-center shadow-lg border border-border/50">
                         <BookOpen className="text-primary/30" size={24} />
                     </div>
-                    <div className="text-center space-y-2 max-w-xs">
-                        <h2 className="text-base font-black text-foreground">
-                            {searchQuery || filterStatus !== 'all' ? "No results found" : "Your library is empty"}
+                    <div className="text-center space-y-2 max-w-xs mx-auto">
+                        <h2 className="text-lg font-black text-foreground">
+                            {searchQuery || filterStatus !== 'all' ? "No books found" : "Your library is empty"}
                         </h2>
-                        <p className="text-[10px] text-muted-foreground font-medium">
-                            {searchQuery
-                                ? "Try adjusting your search or filters."
-                                : "Start your journey by uploading your first PDF document."}
+                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
+                            {filterStatus === 'favorites'
+                                ? "You haven't added any books to favorites yet."
+                                : searchQuery
+                                    ? "Try adjusting your search or filters to find what you're looking for."
+                                    : "Start your journey by uploading your first PDF document to build your knowledge base."}
                         </p>
                     </div>
                 </div>
             ) : (
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 auto-rows-fr">
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {filteredBooks.map((book) => (
-                        <BookCard
-                            key={book.id}
-                            book={book}
-                            onSelect={setSelectedBook}
-                            onDelete={handleDeleteBook}
-                        />
+                        <div key={book.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <BookCard
+                                book={book}
+                                onSelect={setSelectedBook}
+                                onDelete={handleDeleteBook}
+                                onToggleFavorite={handleToggleFavorite}
+                            />
+                        </div>
                     ))}
                 </div>
             )}
