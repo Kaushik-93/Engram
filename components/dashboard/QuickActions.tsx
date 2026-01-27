@@ -14,7 +14,7 @@ export function QuickActions() {
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <BookOpen className="size-4" />
                 </div>
-                Continue Reading
+                Go to Library
             </Button>
 
             <Button

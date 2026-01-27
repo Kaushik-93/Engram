@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard,
     BookOpen,
@@ -22,10 +23,9 @@ export function Sidebar() {
 
     const navItems = [
         { name: "Today", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Read", href: "/read", icon: BookOpen },
+        { name: "Library", href: "/library", icon: Library },
         { name: "Recall", href: "/recall", icon: Brain },
         { name: "Notes", href: "/notes", icon: FileText },
-        { name: "Library", href: "/library", icon: Library },
     ];
 
     return (
@@ -79,14 +79,18 @@ export function Sidebar() {
             </div>
 
             <div className="p-4 space-y-1 mb-6">
-                <Link href="/settings" className="flex w-full items-center rounded-2xl px-4 py-3.5 text-muted-foreground hover:bg-white/[0.03] hover:text-primary transition-all group">
-                    <Settings size={20} className="shrink-0 group-hover:rotate-45 transition-transform duration-500" />
-                    {!isCollapsed && <span className="ml-4 text-sm font-bold tracking-tight">System</span>}
-                </Link>
-                <Link href="/login" className="flex w-full items-center rounded-2xl px-4 py-3.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive transition-all group">
-                    <LogOut size={20} className="shrink-0 group-hover:-translate-x-1 transition-transform" />
-                    {!isCollapsed && <span className="ml-4 text-sm font-bold tracking-tight">Disconnect</span>}
-                </Link>
+                <Button asChild variant="ghost" size="sm" className="w-full justify-start px-4 text-muted-foreground hover:bg-white/[0.03] hover:text-primary transition-all group">
+                    <Link href="/settings" className="flex items-center w-full">
+                        <Settings size={20} className="shrink-0 group-hover:rotate-45 transition-transform duration-500" />
+                        {!isCollapsed && <span className="ml-4 text-sm font-bold tracking-tight">System</span>}
+                    </Link>
+                </Button>
+                <Button asChild variant="logout" size="sm" className="w-full justify-start px-4 transition-all group">
+                    <Link href="/login" className="flex items-center w-full">
+                        <LogOut size={20} className="shrink-0 group-hover:-translate-x-1 transition-transform" />
+                        {!isCollapsed && <span className="ml-4 text-sm font-bold tracking-tight">Disconnect</span>}
+                    </Link>
+                </Button>
             </div>
         </aside>
     );

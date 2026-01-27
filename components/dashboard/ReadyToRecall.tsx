@@ -40,7 +40,7 @@ export function ReadyToRecall() {
                                 <span className="font-semibold text-sm leading-tight">{item.title}</span>
                                 <span className="text-[11px] font-medium text-muted-foreground">{item.source}</span>
                             </div>
-                            <Button variant="ghost" size="sm" className="h-8 text-xs font-bold gap-1.5 hover:bg-primary hover:text-primary-foreground rounded-lg">
+                            <Button variant="ghost" size="sm" className="font-bold gap-1.5 hover:bg-primary hover:text-primary-foreground">
                                 Start Recall
                                 <PlayCircle className="size-3.5" />
                             </Button>
@@ -48,7 +48,7 @@ export function ReadyToRecall() {
                     ))}
                 </div>
 
-                <Button className="w-full h-12 mt-2 rounded-xl text-sm font-bold gap-2 shadow-lg shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99]">
+                <Button className="w-full mt-2 gap-2 shadow-lg shadow-primary/20">
                     <CheckCircle2 className="size-4" />
                     Start All Recalls
                 </Button>

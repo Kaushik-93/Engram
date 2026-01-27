@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar" // 
 
 const data = {
     navMain: [{ name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Library", href: "/read", icon: Library },
+    { name: "Library", href: "/library", icon: Library },
     { name: "Recall", href: "/recall", icon: Brain },
     { name: "Notes", href: "/notes", icon: FileText }],
 

@@ -24,10 +24,34 @@ export interface Highlight {
 
 // Convert DB highlight to frontend format
 export function toFrontendHighlight(h: Highlight) {
+    let text = h.text;
+    let rects = undefined;
+
+    // Detect versioned percentage-based highlights (v:2)
+    if (text.includes("|||rects:")) {
+        try {
+            const isVersion2 = text.includes("|v:2|||");
+            const rectsMatch = text.match(/\|\|\|rects:(\[.*?\])/);
+
+            if (rectsMatch && rectsMatch[1]) {
+                const parsed = JSON.parse(rectsMatch[1]);
+                // Only use rects if they are confirmed percentage-based (v:2)
+                // Legacy non-v2 rects are pixels and will be misplaced on zoom
+                if (isVersion2) {
+                    rects = parsed;
+                }
+            }
+            // Clean up text for UI
+            text = text.split("|||rects:")[0];
+        } catch (e) {
+            console.error("Failed to parse rects from text", e);
+        }
+    }
+
     return {
         id: h.id,
         bookId: h.book_id,
-        text: h.text,
+        text: text,
         pageNumber: h.page_number,
         position: {
             x: h.position_x,
@@ -35,6 +59,7 @@ export function toFrontendHighlight(h: Highlight) {
             width: h.position_width,
             height: h.position_height,
         },
+        rects: rects && rects.length > 0 ? rects : undefined,
         color: h.color,
         createdAt: h.created_at,
     };
@@ -134,12 +159,22 @@ export const highlightStore = {
         text: string;
         pageNumber: number;
         position: { x: number; y: number; width: number; height: number };
+        rects?: { x: number; y: number; width: number; height: number }[];
         color: string;
     }) => {
+        // Encode rects into text field to bypass schema limitations
+        // v:2 indicator means percentages are used (scale-independent)
+        const encodedText = highlight.rects
+            ? `${highlight.text}|||rects:${JSON.stringify(highlight.rects)}|v:2|||`
+            : highlight.text;
+
         const response = await fetch("/api/highlights", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(highlight),
+            body: JSON.stringify({
+                ...highlight,
+                text: encodedText
+            }),
         });
         if (!response.ok) throw new Error("Failed to create highlight");
         const data: Highlight = await response.json();

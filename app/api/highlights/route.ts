@@ -54,9 +54,18 @@ export async function POST(request: NextRequest) {
         if (error) throw error;
 
         return NextResponse.json(data);
-    } catch (error) {
-        console.error("Error creating highlight:", error);
-        return NextResponse.json({ error: "Failed to create highlight" }, { status: 500 });
+    } catch (error: any) {
+        console.error("--- Critical Error Creating Highlight ---");
+        console.error("Error Message:", error.message);
+        console.error("Error Details:", error.details || "No extra details");
+        console.error("Error Code:", error.code || "No code");
+        console.error("Stack Trace:", error.stack);
+        console.error("-----------------------------------------");
+
+        return NextResponse.json({
+            error: "Failed to connect to the database. Please check your internet connection.",
+            message: error.message
+        }, { status: 500 });
     }
 }
 
