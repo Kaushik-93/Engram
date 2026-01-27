@@ -3,7 +3,7 @@
 import * as React from "react"
 import { ReadyToRecall } from "@/components/dashboard/ReadyToRecall"
 import { ConsistencyChart } from "@/components/dashboard/ConsistencyChart"
-import { KnowledgeGraph } from "@/components/dashboard/KnowledgeGraph"
+
 import { QuickActions } from "@/components/dashboard/QuickActions"
 import { SessionSummary } from "@/components/dashboard/SessionSummary"
 
@@ -20,10 +20,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Middle Section: Knowledge Graph */}
-            <div className="grid gap-6">
-                <KnowledgeGraph />
-            </div>
+
 
             {/* Bottom Sections: Quick Actions & Session Summary */}
             <div className="space-y-8">

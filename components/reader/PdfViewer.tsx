@@ -6,7 +6,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { FlashcardItem } from "./FlashcardItem";
-import { Book, highlightStore, bookStore, flashcardStore, Flashcard } from "@/lib/store";
+import { Book, highlightStore, bookStore, flashcardStore, Flashcard, FrontendHighlight } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,16 +52,8 @@ interface HighlightRect {
     height: number;
 }
 
-interface FrontendHighlight {
-    id: string;
-    bookId: string;
-    text: string;
-    pageNumber: number;
-    position: HighlightRect; // Original bounding box for compatibility
-    rects?: HighlightRect[];  // NEW: Multiple rects for perfectly fitting multi-line selection
-    color: string;
-    createdAt: string;
-}
+// Local Interface Removed
+
 
 interface PdfViewerProps {
     book: Book;

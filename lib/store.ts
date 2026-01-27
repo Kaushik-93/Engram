@@ -23,6 +23,22 @@ export interface Highlight {
     created_at: string;
 }
 
+export interface FrontendHighlight {
+    id: string;
+    bookId: string;
+    text: string;
+    pageNumber: number;
+    position: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    rects?: { x: number; y: number; width: number; height: number }[];
+    color: string;
+    createdAt: string;
+}
+
 export interface Flashcard {
     id: string;
     book_id: string;
@@ -33,7 +49,7 @@ export interface Flashcard {
 }
 
 // Convert DB highlight to frontend format
-export function toFrontendHighlight(h: Highlight) {
+export function toFrontendHighlight(h: Highlight): FrontendHighlight {
     let text = h.text;
     let rects = undefined;
 
