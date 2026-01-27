@@ -23,6 +23,15 @@ export interface Highlight {
     created_at: string;
 }
 
+export interface Flashcard {
+    id: string;
+    book_id: string;
+    highlight_id?: string;
+    front: string;
+    back: string;
+    created_at: string;
+}
+
 // Convert DB highlight to frontend format
 export function toFrontendHighlight(h: Highlight) {
     let text = h.text;
@@ -219,3 +228,62 @@ export const highlightStore = {
         return md;
     },
 };
+
+// Flashcard Store
+export const flashcardStore = {
+    getByBook: async (bookId: string): Promise<Flashcard[]> => {
+        const response = await fetch(`/api/flashcards?bookId=${bookId}`);
+        if (!response.ok) throw new Error("Failed to fetch flashcards");
+        return response.json();
+    },
+
+    add: async (card: { bookId: string; highlightId?: string; front: string; back: string }) => {
+        const response = await fetch("/api/flashcards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(card),
+        });
+        if (!response.ok) throw new Error("Failed to create flashcard");
+        return response.json();
+    },
+
+    delete: async (id: string): Promise<boolean> => {
+        const response = await fetch(`/api/flashcards?id=${id}`, { method: "DELETE" });
+        return response.ok;
+    },
+
+    generate: async (text: string, context: string): Promise<{ front: string; back: string }[]> => {
+        const response = await fetch("/api/ai/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, context }),
+        });
+        if (!response.ok) throw new Error("Failed to generate flashcards");
+        const data = await response.json();
+        return data.flashcards;
+    }
+};
+
+export const recallStore = {
+    generateQuestions: async (bookId: string, bookTitle: string, flashcards: Flashcard[], highlights: any[]) => {
+        const response = await fetch("/api/ai/recall/questions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bookId, bookTitle, flashcards, highlights }),
+        });
+        if (!response.ok) throw new Error("Failed to generate recall questions");
+        const data = await response.json();
+        return data.questions;
+    },
+
+    evaluateAnswer: async (question: string, correctReference: string, userAnswer: string) => {
+        const response = await fetch("/api/ai/evaluate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, correctAnswer: correctReference, userAnswer }),
+        });
+        if (!response.ok) throw new Error("Failed to evaluate answer");
+        return response.json();
+    }
+};
+

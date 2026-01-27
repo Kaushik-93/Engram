@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { compressBase64 } from "@/lib/compression";
+import { generateChunks, generateEmbeddings, saveEmbeddings } from "@/lib/ai/embedding";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+
+// Set up PDF.js worker for server-side
+if (typeof window === 'undefined') {
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+}
 
 // GET all books
 export async function GET() {
@@ -62,6 +69,42 @@ export async function POST(request: NextRequest) {
             // Rollback book creation
             await supabase.from("books").delete().eq("id", book.id);
             throw fileError;
+        }
+
+        // Extract text from PDF and create embeddings (run in background)
+        try {
+            // Decode base64 to Uint8Array for PDF.js - strip prefix if exists
+            const base64Payload = fileData.split(",")[1] || fileData;
+            const buffer = Buffer.from(base64Payload, 'base64');
+            const pdfData = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.length);
+            const pdf = await pdfjs.getDocument({ data: pdfData }).promise;
+            const allChunks = [];
+
+            // Update total pages
+            await supabase
+                .from("books")
+                .update({ total_pages: pdf.numPages })
+                .eq("id", book.id);
+
+            // Extract text from each page and generate chunks
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const text = textContent.items.map((item: any) => item.str).join(" ");
+
+                const pageChunks = generateChunks(text, i);
+                allChunks.push(...pageChunks);
+            }
+
+            // Generate embeddings for all chunks
+            if (allChunks.length > 0) {
+                const embeddings = await generateEmbeddings(allChunks);
+                await saveEmbeddings(book.id, embeddings);
+                console.log(`Created ${embeddings.length} embeddings for book ${book.id}`);
+            }
+        } catch (embeddingError) {
+            // Don't fail the book creation if embedding fails
+            console.error("Error creating embeddings:", embeddingError);
         }
 
         return NextResponse.json({
