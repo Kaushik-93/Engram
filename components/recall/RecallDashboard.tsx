@@ -52,6 +52,45 @@ export function RecallDashboard({ books, isLoading, onStartSession }: RecallDash
                 </div>
             </div>
 
+            {/* Quick Actions */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                <Card
+                    className="group relative rounded-[32px] border border-border/60 bg-gradient-to-br from-orange-500/5 to-transparent hover:border-orange-500/20 hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 cursor-pointer overflow-hidden"
+                    onClick={() => window.location.href = "/recall/feed"}
+                >
+                    <div className="p-8 flex items-center gap-6">
+                        <div className="h-16 w-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                            <Target size={32} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-foreground">Daily Recall Feed</h3>
+                            <p className="text-sm text-muted-foreground font-medium">Review your spaced repetition queue</p>
+                        </div>
+                        <Button size="icon" className="ml-auto rounded-xl bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white transition-colors">
+                            <ChevronRight />
+                        </Button>
+                    </div>
+                </Card>
+
+                <Card
+                    className="group relative rounded-[32px] border border-border/60 bg-gradient-to-br from-blue-500/5 to-transparent hover:border-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-500 cursor-pointer overflow-hidden"
+                    onClick={() => window.location.href = "/recall/brain-dump"}
+                >
+                    <div className="p-8 flex items-center gap-6">
+                        <div className="h-16 w-16 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                            <Brain size={32} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-foreground">Brain Dump Canvas</h3>
+                            <p className="text-sm text-muted-foreground font-medium">Force retrieval on a blank slate</p>
+                        </div>
+                        <Button size="icon" className="ml-auto rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-colors">
+                            <ChevronRight />
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+
             {/* Subjects Grid */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">

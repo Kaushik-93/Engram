@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
+import { AI_CONFIG } from "@/lib/ai-config";
 
 export const maxDuration = 60;
 
@@ -19,10 +20,10 @@ export async function POST(request: NextRequest) {
         const contextToUse = context || "No specific context chunks found for this query.";
 
         const prompt = `
-You are a helpful study assistant. Answer the user's question using the provided context from the textbook/PDF.
-If the context is helpful, prioritize it. If you cannot find the answer in the context, use your general knowledge but mention that it was not in the specific text provided.
+You are a helpful study assistant.Answer the user's question using the provided context from the textbook/PDF.
+If the context is helpful, prioritize it.If you cannot find the answer in the context, use your general knowledge but mention that it was not in the specific text provided.
 
-Context:
+    Context:
 ${contextToUse}
 
 User Question:
@@ -30,7 +31,7 @@ ${question}
 `;
 
         const result = await streamText({
-            model: google("gemini-3-flash-preview"),
+            model: google(AI_CONFIG.defaultModel),
             prompt: prompt,
         });
 

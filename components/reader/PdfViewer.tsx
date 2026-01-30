@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ExplanationBox } from "./ExplanationBox";
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -717,10 +718,11 @@ export function PdfViewer({ book, onClose }: PdfViewerProps) {
                                 </div>
                             </div>
 
-                            <TabsList className="grid w-full grid-cols-3 h-11 p-1 bg-muted/50 rounded-2xl border border-border/40">
-                                <TabsTrigger value="insights" className="rounded-xl font-bold uppercase tracking-wider text-[10px] data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Insights</TabsTrigger>
-                                <TabsTrigger value="flashcards" className="rounded-xl font-bold uppercase tracking-wider text-[10px] data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Cards</TabsTrigger>
-                                <TabsTrigger value="chat" className="rounded-xl font-bold uppercase tracking-wider text-[10px] data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Chat</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-4 h-11 p-1 bg-muted/50 rounded-2xl border border-border/40">
+                                <TabsTrigger value="insights" className="rounded-xl font-bold uppercase tracking-wider text-[9px] truncate data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Insights</TabsTrigger>
+                                <TabsTrigger value="flashcards" className="rounded-xl font-bold uppercase tracking-wider text-[9px] truncate data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Cards</TabsTrigger>
+                                <TabsTrigger value="chat" className="rounded-xl font-bold uppercase tracking-wider text-[9px] truncate data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Chat</TabsTrigger>
+                                <TabsTrigger value="active-read" className="rounded-xl font-bold uppercase tracking-wider text-[9px] truncate data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all duration-300">Learn</TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -902,6 +904,24 @@ export function PdfViewer({ book, onClose }: PdfViewerProps) {
                                             <Send size={14} />
                                         </Button>
                                     </form>
+                                </div>
+                            </TabsContent>
+                            {/* ACTIVE READING TAB */}
+                            <TabsContent value="active-read" className="h-full absolute inset-0 flex flex-col mt-0 data-[state=active]:animate-in data-[state=active]:fade-in data-[state=active]:slide-in-from-bottom-2 duration-500">
+                                <ExplanationBox
+                                    contextText={`Context from Page ${pageNumber}`} // Placeholder context
+                                    onPass={() => {
+                                        // Auto-advance or visual cue
+                                    }}
+                                />
+                                <div className="p-6 pt-0">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full border-dashed"
+                                        onClick={() => window.location.href = "/recall/brain-dump"}
+                                    >
+                                        Open Brain Dump Canvas
+                                    </Button>
                                 </div>
                             </TabsContent>
                         </div>

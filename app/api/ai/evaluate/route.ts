@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { AI_CONFIG } from "@/lib/ai-config";
 
 export const maxDuration = 60;
 
@@ -25,8 +26,10 @@ Compare the meaning. If the user is correct (even if worded differently), mark a
 Provide brief, encouraging feedback. If incorrect, explain why and highlight the key concept missed.
 `;
 
+
+        // ...
         const { object } = await generateObject({
-            model: google("gemini-2.5-flash"),
+            model: google(AI_CONFIG.reasoningModel),
             schema: z.object({
                 isCorrect: z.boolean(),
                 feedback: z.string().describe("Brief feedback explaining why it is correct or incorrect"),

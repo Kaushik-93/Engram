@@ -1,12 +1,14 @@
+import "@/lib/polyfill-pdf"; // Must be first
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { compressBase64 } from "@/lib/compression";
 import { generateChunks, generateEmbeddings, saveEmbeddings } from "@/lib/ai/embedding";
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as pdfjs from "pdfjs-dist/build/pdf.mjs";
 
 // Set up PDF.js worker for server-side
 if (typeof window === 'undefined') {
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+    // Use standard build worker
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 }
 
 // GET all books

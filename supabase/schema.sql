@@ -94,3 +94,51 @@ $$;
 -- ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE public.flashcards ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE public.embeddings ENABLE ROW LEVEL SECURITY;
+
+-- Priming & Predictions
+CREATE TABLE IF NOT EXISTS public.priming_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    book_id UUID REFERENCES public.books(id) ON DELETE CASCADE,
+    questions JSONB NOT NULL, -- Array of generated questions
+    hooks JSONB NOT NULL, -- Hook text
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_predictions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    book_id UUID REFERENCES public.books(id) ON DELETE CASCADE,
+    prediction_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Spaced Repetition / Active Recall
+CREATE TABLE IF NOT EXISTS public.recall_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    book_id UUID REFERENCES public.books(id) ON DELETE CASCADE,
+    concept_text TEXT NOT NULL, -- The thing to remember
+    clue_text TEXT, -- Optional hint or question
+    last_recalled_at TIMESTAMPTZ,
+    next_due_at TIMESTAMPTZ DEFAULT now(),
+    interval_minutes INTEGER DEFAULT 0, -- Spaced repetition interval
+    stability FLOAT DEFAULT 0, -- For FSRS or similar algo
+    complexity FLOAT DEFAULT 0, -- Difficulty multiplier
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.recall_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recall_item_id UUID REFERENCES public.recall_items(id) ON DELETE CASCADE,
+    score FLOAT NOT NULL, -- 0 to 1 (accuracy)
+    time_taken_ms INTEGER,
+    recalled_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Concept Mapping / Revision
+CREATE TABLE IF NOT EXISTS public.concept_maps (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    book_id UUID REFERENCES public.books(id) ON DELETE CASCADE,
+    nodes JSONB NOT NULL, -- Canvas nodes
+    edges JSONB NOT NULL, -- Canvas connections
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);

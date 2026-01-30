@@ -9,6 +9,7 @@ import { LibraryHeader } from "@/components/library/LibraryHeader";
 import { LibraryToolbar, FilterStatus, SortOption } from "@/components/library/LibraryToolbar";
 import { EmptyLibraryState } from "@/components/library/EmptyLibraryState";
 import { BookGrid } from "@/components/library/BookGrid";
+import { PrimingModal } from "@/components/priming/PrimingModal";
 
 // Dynamic import to avoid SSR issues with react-pdf
 const PdfViewer = dynamic(
@@ -37,6 +38,7 @@ export default function LibraryPage() {
     const [sortBy, setSortBy] = React.useState<SortOption>("recent");
     const [filterStatus, setFilterStatus] = React.useState<FilterStatus>("all");
     const [selectedBook, setSelectedBook] = React.useState<Book | null>(null);
+    const [isPrimingOpen, setIsPrimingOpen] = React.useState(false);
     const [isUploading, setIsUploading] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
@@ -163,9 +165,18 @@ export default function LibraryPage() {
             });
     }, [books, searchQuery, sortBy, filterStatus]);
 
+    // Intercept selection for Priming
+    const handleBookSelect = (book: Book) => {
+        setSelectedBook(book);
+        setIsPrimingOpen(true);
+    };
+
+    // Removed direct PdfViewer return to allow layout to persist and use Modal
+    /* 
     if (selectedBook) {
-        return <PdfViewer book={selectedBook} onClose={() => setSelectedBook(null)} />;
-    }
+       return <PdfViewer book={selectedBook} onClose={() => setSelectedBook(null)} />;
+    } 
+    */
 
     return (
         <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-10 animate-in fade-in duration-700">
@@ -202,7 +213,7 @@ export default function LibraryPage() {
                 <BookGrid
                     isLoading={isLoading}
                     books={filteredBooks}
-                    onSelect={setSelectedBook}
+                    onSelect={handleBookSelect}
                     onDelete={handleDeleteBook}
                     onToggleFavorite={handleToggleFavorite}
                 />
@@ -212,6 +223,15 @@ export default function LibraryPage() {
                     filterStatus={filterStatus}
                 />
             )}
+
+            <PrimingModal
+                book={selectedBook}
+                isOpen={isPrimingOpen}
+                onClose={() => {
+                    setIsPrimingOpen(false);
+                    setSelectedBook(null);
+                }}
+            />
         </div>
     );
 }

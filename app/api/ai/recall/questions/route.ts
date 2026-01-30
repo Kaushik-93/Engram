@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { AI_CONFIG } from "@/lib/ai-config";
 
 export const maxDuration = 60;
 
@@ -36,7 +37,7 @@ For each question, provide a "Correct Reference" which is what a perfect answer 
 `;
 
         const { object } = await generateObject({
-            model: google("gemini-2.5-flash"),
+            model: google(AI_CONFIG.reasoningModel),
             schema: z.object({
                 questions: z.array(z.object({
                     id: z.string(),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { AI_CONFIG } from "@/lib/ai-config";
 
 export const maxDuration = 60; // Allow 60 seconds for generation
 
@@ -26,8 +27,10 @@ Main Text to converting to flashcards:
 ${text}
 `;
 
+
+        // ...
         const { object } = await generateObject({
-            model: google("gemini-3-flash-preview"),
+            model: google(AI_CONFIG.defaultModel),
             schema: z.object({
                 flashcards: z.array(z.object({
                     front: z.string().describe("The question or term on the front of the card"),

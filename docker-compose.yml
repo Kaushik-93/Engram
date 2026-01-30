@@ -1,0 +1,19 @@
+services:
+  app:
+    container_name: engram-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Load environment variables from .env.local into the container
+    env_file:
+      - .env.local
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    networks:
+      - engram-network
+
+networks:
+  engram-network:
+    driver: bridge
