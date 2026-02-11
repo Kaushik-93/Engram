@@ -16,20 +16,14 @@ import {
 
 export default function LoginPage() {
     const router = useRouter();
-    const [email, setEmail] = React.useState("");
-    const [password, setPassword] = React.useState("");
+    const [email, setEmail] = React.useState("admin");
+    const [password, setPassword] = React.useState("admin");
     const [error, setError] = React.useState("");
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (email === "admin" && password === "admin") {
-            router.push("/dashboard");
-        } else if (email.includes("@") && password.length >= 6) {
-            // Allow common email format for demo too
-            router.push("/dashboard");
-        } else {
-            setError("Please use 'admin' / 'admin' or a valid email/password.");
-        }
+        // Dummy login: accept anything
+        router.push("/dashboard");
     };
     return (
         <div className="flex min-h-screen w-full items-center justify-center p-4 bg-background">
